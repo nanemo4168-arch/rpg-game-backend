@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java RPG - 코드로 싸워라!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0e1a; --bg2:#111827; --bg3:#1a2235; --card:#161e30;
+  --border:#2a3548; --accent:#6ee7f7; --accent2:#a78bfa;
+  --gold:#fbbf24; --green:#34d399; --red:#f87171; --orange:#fb923c;
+  --text:#e2e8f0; --text2:#94a3b8; --text3:#64748b;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(110,231,247,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(110,231,247,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+.screen{display:none;}
+.screen.active{display:block;}
+.game-container{max-width:900px;margin:0 auto;padding:20px;position:relative;z-index:1;}
+
+/* 타이틀 */
+#screen-title{min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px;}
+#screen-title.active{display:flex;}
+.title-logo{font-family:'Cinzel',serif;font-size:clamp(2rem,6vw,4.5rem);font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;}
+.title-sub{font-size:.9rem;color:var(--text2);letter-spacing:.3em;text-transform:uppercase;margin-bottom:40px;}
+.boss-preview{display:flex;gap:16px;margin-bottom:40px;flex-wrap:wrap;justify-content:center;}
+.boss-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;text-align:center;width:150px;transition:transform .2s,border-color .2s;}
+.boss-card:hover{transform:none;border-color:var(--border);}
+.boss-card .boss-emoji{font-size:2rem;display:block;margin-bottom:6px;}
+.boss-card .boss-stage{font-size:.65rem;color:var(--accent);text-transform:uppercase;letter-spacing:.2em;}
+.boss-card .boss-name{font-size:.85rem;font-weight:700;margin-top:3px;}
+.start-form{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;width:100%;max-width:380px;}
+.start-form h2{font-size:1rem;color:var(--text2);margin-bottom:16px;font-weight:500;}
+.input-group input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:13px 16px;color:var(--text);font-size:1rem;font-family:'Noto Sans KR',sans-serif;outline:none;transition:border-color .2s;}
+.input-group input:focus{border-color:var(--accent);}
+.input-group input::placeholder{color:var(--text3);}
+.btn-primary{width:100%;background:linear-gradient(135deg,#0ea5e9,var(--accent2));border:none;border-radius:10px;padding:13px;color:white;font-size:1rem;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:opacity .2s,transform .1s;margin-top:10px;}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px);}
+.btn-secondary{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 18px;color:var(--text2);font-size:.85rem;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:border-color .2s;}
+.btn-secondary:hover{border-color:var(--accent2);color:var(--text);}
+.error-msg{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:8px;padding:10px 14px;color:var(--red);font-size:.82rem;margin-top:8px;}
+
+/* 네비 */
+.nav-bar{display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:20px;}
+.nav-logo{font-family:'Cinzel',serif;font-size:1rem;font-weight:700;color:var(--accent);}
+
+/* 전투 레이아웃 */
+.battle-area{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;align-items:start;position:relative;}
+.player-section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;text-align:center;}
+.player-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.2em;color:var(--text3);margin-bottom:8px;}
+.player-name{font-size:1rem;font-weight:700;margin-bottom:12px;color:var(--accent);}
+.player-avatar{font-size:4rem;display:block;margin:0 auto 10px;transition:all .3s;filter:drop-shadow(0 0 8px rgba(52,211,153,.4));}
+.player-avatar.hurt{animation:playerHurt .4s ease;filter:drop-shadow(0 0 12px rgba(248,113,113,.6));}
+@keyframes playerHurt{0%,100%{transform:translateX(0) scale(1);}25%{transform:translateX(-6px) scale(.95);}75%{transform:translateX(6px) scale(.95);}}
+.player-hp-bar-bg{background:var(--bg3);border-radius:99px;height:8px;overflow:hidden;}
+.player-hp-bar-fill{height:100%;border-radius:99px;transition:width .3s;}
+.hp-high{background:linear-gradient(90deg,#059669,var(--green));}
+.hp-mid{background:linear-gradient(90deg,#d97706,var(--orange));}
+.hp-low{background:linear-gradient(90deg,#b91c1c,var(--red));}
+.player-hp-text{font-size:.75rem;color:var(--text2);margin-top:4px;}
+.boss-avatar{font-size:3.5rem;display:block;margin:0 auto 8px;transition:all .3s;}
+.boss-avatar.shake{animation:bossShake .4s ease;}
+@keyframes bossShake{0%,100%{transform:translateX(0) rotate(0);}20%{transform:translateX(-8px) rotate(-3deg);}40%{transform:translateX(8px) rotate(3deg);}60%{transform:translateX(-5px) rotate(-2deg);}80%{transform:translateX(5px) rotate(2deg);}}
+.boss-hp-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#b91c1c,var(--red));transition:width .5s cubic-bezier(.25,.46,.45,.94);}
+.boss-hp-100{filter:none;}
+.boss-hp-75{filter:sepia(.3) saturate(1.2);}
+.boss-hp-50{filter:sepia(.6) saturate(.8) brightness(.9);}
+.boss-hp-25{filter:grayscale(.5) sepia(.4) brightness(.7);}
+.boss-hp-dead{filter:grayscale(1) brightness(.5);transform:rotate(10deg) !important;}
+
+/* 상태바 & 타이머 */
+.status-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;}
+.stage-badge{background:linear-gradient(135deg,var(--accent2),#7c3aed);border-radius:99px;padding:5px 14px;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;}
+.score-display{font-size:.8rem;color:var(--gold);font-weight:700;}
+.question-progress{font-size:.8rem;color:var(--text2);}
+.timer-wrap{margin-bottom:16px;}
+.timer-bar-bg{background:var(--bg3);border-radius:99px;height:6px;overflow:hidden;}
+.timer-bar-fill{height:100%;border-radius:99px;transition:width .1s linear;}
+.time-ok{background:linear-gradient(90deg,#0ea5e9,var(--accent));}
+.time-warn{background:linear-gradient(90deg,#d97706,var(--orange));}
+.time-danger{background:linear-gradient(90deg,#b91c1c,var(--red));}
+.timer-text{font-size:.75rem;color:var(--text2);text-align:right;margin-top:3px;}
+
+/* 콤보 */
+.combo-display{text-align:center;height:26px;margin-bottom:12px;}
+.combo-badge{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--gold);border-radius:99px;padding:3px 14px;font-size:.8rem;font-weight:700;color:var(--gold);animation:comboAppear .3s ease;}
+@keyframes comboAppear{from{transform:scale(.8);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+/* 문제 카드 */
+.question-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px 28px;margin-bottom:16px;}
+.question-meta{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.tag{font-size:.65rem;padding:3px 10px;border-radius:99px;font-weight:700;}
+.tag-concept{background:rgba(167,139,250,.15);color:var(--accent2);border:1px solid rgba(167,139,250,.3);}
+.tag-diff.d1{color:var(--green);border:1px solid rgba(52,211,153,.3);background:rgba(52,211,153,.1);}
+.tag-diff.d2{color:var(--gold);border:1px solid rgba(251,191,36,.3);background:rgba(251,191,36,.1);}
+.tag-diff.d3{color:var(--red);border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.1);}
+.tag-code{color:var(--accent);border:1px solid rgba(110,231,247,.3);background:rgba(110,231,247,.1);}
+.question-text{font-size:.98rem;line-height:1.8;}
+.code-block{font-family:'JetBrains Mono',monospace;font-size:.85rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin:10px 0;color:var(--accent);white-space:pre;overflow-x:auto;line-height:1.7;}
+
+/* 객관식 */
+.answer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.answer-btn{background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;padding:14px 18px;color:var(--text);font-size:.88rem;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .15s;text-align:left;display:flex;gap:10px;align-items:flex-start;line-height:1.5;}
+.answer-btn:hover:not(:disabled){border-color:var(--accent);background:rgba(110,231,247,.06);transform:translateY(-2px);}
+.answer-btn:disabled{cursor:not-allowed;}
+.answer-btn.correct{border-color:var(--green);background:rgba(52,211,153,.12);color:var(--green);}
+.answer-btn.wrong{border-color:var(--red);background:rgba(248,113,113,.1);color:var(--red);}
+.answer-label{font-weight:900;font-size:.85rem;min-width:20px;color:var(--accent);}
+.answer-btn.correct .answer-label{color:var(--green);}
+.answer-btn.wrong .answer-label{color:var(--red);}
+
+/* 코드 입력 */
+.code-input-section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:16px;}
+.code-input-label{font-size:.8rem;color:var(--text2);margin-bottom:10px;}
+.code-input-area{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:.95rem;resize:vertical;min-height:60px;max-height:120px;outline:none;transition:border-color .2s;line-height:1.6;}
+.code-input-area:focus{border-color:var(--accent);}
+.code-input-actions{display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap;}
+.code-submit-btn{background:linear-gradient(135deg,#0ea5e9,var(--accent2));border:none;border-radius:8px;padding:10px 24px;color:white;font-size:.9rem;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:opacity .2s;}
+.code-submit-btn:hover{opacity:.9;}
+.code-submit-btn:disabled{opacity:.5;cursor:not-allowed;}
+.hint-btn{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:8px 16px;color:var(--gold);font-size:.8rem;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .2s;}
+.hint-btn:hover{background:rgba(251,191,36,.2);}
+.hint-box{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:12px 14px;margin-top:10px;font-size:.83rem;color:var(--gold);line-height:1.6;display:none;}
+.hint-box.show{display:block;animation:fadeIn .3s ease;}
+.enter-hint{font-size:.72rem;color:var(--text3);margin-left:auto;}
+
+/* 피드백 */
+.feedback-card{border-radius:12px;padding:14px 18px;margin-top:10px;display:none;animation:fadeIn .3s ease;position:sticky;bottom:10px;}.feedback-card.show{display:block;}
+.feedback-card.correct-fb{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);}
+.feedback-card.wrong-fb{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);}
+.feedback-header{font-size:.95rem;font-weight:700;margin-bottom:6px;}
+.feedback-card.correct-fb .feedback-header{color:var(--green);}
+.feedback-card.wrong-fb .feedback-header{color:var(--red);}
+.feedback-text{font-size:.83rem;color:var(--text2);line-height:1.7;}
+.feedback-code{font-family:'JetBrains Mono',monospace;font-size:.82rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin-top:8px;color:var(--green);}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+.next-btn-wrap{margin-top:14px;text-align:center;}
+
+/* 데미지 플로팅 */
+.damage-float{position:absolute;font-size:1.4rem;font-weight:900;pointer-events:none;animation:floatUp 1s ease forwards;z-index:10;}
+.damage-float.to-boss{color:var(--accent);}
+.damage-float.to-player{color:var(--red);}
+.damage-float.heal{color:var(--green);}
+@keyframes floatUp{from{opacity:1;transform:translateY(0) scale(1);}to{opacity:0;transform:translateY(-60px) scale(.8);}}
+
+/* 콤보 토스트 */
+.combo-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);background:var(--card);border:2px solid var(--gold);border-radius:16px;padding:20px 36px;text-align:center;z-index:100;opacity:0;pointer-events:none;transition:all .3s;}
+.combo-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+
+/* 랭킹 */
+#screen-ranking{padding:40px 0;}
+.ranking-title{font-family:'Cinzel',serif;font-size:1.8rem;font-weight:700;color:var(--gold);text-align:center;margin-bottom:4px;}
+.ranking-table{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin:20px 0;}
+.ranking-row{display:grid;grid-template-columns:60px 1fr 100px 80px 80px;padding:14px 20px;align-items:center;border-bottom:1px solid var(--border);}
+.ranking-row:last-child{border-bottom:none;}
+.ranking-row.header{font-size:.65rem;text-transform:uppercase;letter-spacing:.2em;color:var(--text3);background:var(--bg3);}
+.rank-num{font-weight:900;font-size:1rem;}
+.rank-1 .rank-num{color:#ffd700;}.rank-2 .rank-num{color:#c0c0c0;}.rank-3 .rank-num{color:#cd7f32;}
+.rank-nickname{font-weight:700;}
+.rank-score{color:var(--accent);font-weight:700;}
+.rank-result{font-size:.7rem;padding:3px 8px;border-radius:99px;text-align:center;}
+.rank-result.WIN{background:rgba(52,211,153,.15);color:var(--green);border:1px solid rgba(52,211,153,.3);}
+.rank-result.LOSE{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2);}
+
+/* 종료 */
+#screen-end{min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px;}
+#screen-end.active{display:flex;}
+.end-icon{font-size:5rem;margin-bottom:16px;}
+.end-title{font-family:'Cinzel',serif;font-size:2.2rem;font-weight:900;margin-bottom:10px;}
+.end-title.win{color:var(--gold);}.end-title.lose{color:var(--red);}
+.end-sub{color:var(--text2);margin-bottom:28px;}
+.end-stats{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px 36px;margin-bottom:28px;display:flex;gap:36px;}
+.end-stat{text-align:center;}
+.end-stat-val{font-size:1.8rem;font-weight:900;color:var(--accent);display:block;}
+.end-stat-label{font-size:.7rem;color:var(--text3);margin-top:3px;text-transform:uppercase;letter-spacing:.1em;}
+.end-buttons{display:flex;gap:10px;}
+
+.loading{text-align:center;padding:40px;color:var(--text2);}
+.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media(max-width:600px){
+  .battle-area{grid-template-columns:1fr;}
+  .answer-grid{grid-template-columns:1fr;}
+  .end-stats{flex-direction:column;gap:16px;}
+  .ranking-row{grid-template-columns:50px 1fr 80px 60px;}
+}
+/* 피드백 모달 */
+.feedback-modal-overlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  z-index:300;
+  align-items:center;
+  justify-content:center;
+}
+.feedback-modal-overlay.show {
+  display:flex;
+}
+.feedback-modal {
+  background:var(--card);
+  border-radius:16px;
+  padding:24px 28px;
+  max-width:420px;
+  width:90%;
+  animation:fadeIn .25s ease;
+}
+.feedback-modal.correct-fb { border:2px solid var(--green); }
+.feedback-modal.wrong-fb { border:2px solid var(--red); }
+.feedback-modal-header {
+  font-size:1.1rem;
+  font-weight:700;
+  margin-bottom:10px;
+}
+.feedback-modal.correct-fb .feedback-modal-header { color:var(--green); }
+.feedback-modal.wrong-fb .feedback-modal-header { color:var(--red); }
+.feedback-modal-text {
+  font-size:.88rem;
+  color:var(--text2);
+  line-height:1.7;
+  margin-bottom:14px;
+}
+.feedback-modal-code {
+  font-family:'JetBrains Mono',monospace;
+  font-size:.82rem;
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:8px 12px;
+  margin-bottom:14px;
+  color:var(--green);
+}
+.feedback-modal-btn {
+  width:100%;
+  background:linear-gradient(135deg,#0ea5e9,var(--accent2));
+  border:none;
+  border-radius:10px;
+  padding:12px;
+  color:white;
+  font-size:.95rem;
+  font-weight:700;
+  font-family:'Noto Sans KR',sans-serif;
+  cursor:pointer;
+  transition:opacity .2s;
+}
+.feedback-modal-btn:hover { opacity:.9; }
+</style>
+</head>
+<body>
+
+<!-- 타이틀 -->
+<div id="screen-title" class="screen active">
+<div class="game-container">
+  <div class="title-logo">Java RPG</div>
+<div class="title-sub">문제를 맞혀서 괴물을 물리치시오</div>
+  <div class="boss-preview">
+    <div class="boss-card"><span class="boss-emoji">🗿</span><div class="boss-stage">Stage 1</div><div class="boss-name">변수 골렘</div></div>
+    <div class="boss-card"><span class="boss-emoji">🐉</span><div class="boss-stage">Stage 2</div><div class="boss-name">객체 드래곤</div></div>
+    <div class="boss-card"><span class="boss-emoji">👹</span><div class="boss-stage">Stage 3</div><div class="boss-name">컬렉션 마왕</div></div>
+  </div>
+  <div class="start-form">
+    <h2>닉네임을 입력하고 시작하세요</h2>
+    <div class="input-group"><input type="text" id="nicknameInput" placeholder="닉네임" maxlength="20"></div>
+    <div id="startError" style="display:none;" class="error-msg"></div>
+    <button class="btn-primary" onclick="startGame()">⚔️ 게임 시작</button>
+    <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="showRanking()">🏆 랭킹 보기</button>
+  </div>
+</div>
+</div>
+
+<!-- 게임 화면 -->
+<div id="screen-game" class="screen">
+<div class="game-container">
+  <div class="nav-bar">
+    <div class="nav-logo">⚔️ Java RPG</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-secondary" onclick="showRanking()">🏆 랭킹</button>
+      <button class="btn-secondary" onclick="confirmQuit()">🚪 나가기</button>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="stage-badge" id="stageBadge">STAGE 1</div>
+    <div class="question-progress" id="questionProgress">문제 1 / 4</div>
+    <div class="score-display">🏆 <span id="scoreText">0</span></div>
+  </div>
+
+  <div class="timer-wrap">
+    <div class="timer-bar-bg"><div class="timer-bar-fill time-ok" id="timerBar" style="width:100%"></div></div>
+    <div class="timer-text" id="timerText">30초</div>
+  </div>
+
+  <div class="battle-area">
+    <div class="player-section">
+      <div class="player-label">플레이어</div>
+      <div class="player-name" id="playerNameDisplay">용사</div>
+      <span class="player-avatar" id="playerAvatar">🧙</span>
+      <div class="player-hp-bar-bg"><div class="player-hp-bar-fill hp-high" id="playerHpBar" style="width:100%"></div></div>
+      <div class="player-hp-text">HP <span id="playerHpText">100</span> / 100</div>
+    </div>
+    <div class="player-section" style="border-color:rgba(248,113,113,.2);">
+      <div class="player-label" style="color:var(--red);">보스</div>
+      <div class="player-name" id="bossNameDisplay" style="color:var(--red);">변수 골렘</div>
+      <span class="boss-avatar boss-hp-100" id="bossAvatar">🗿</span>
+      <div class="player-hp-bar-bg"><div class="boss-hp-bar-fill" id="bossHpBar" style="width:100%"></div></div>
+      <div class="player-hp-text">HP <span id="bossHpText">300</span> / <span id="bossMaxHpText">300</span></div>
+    </div>
+  </div>
+
+  <div class="combo-display" id="comboDisplay"></div>
+
+  <div id="questionArea">
+    <div class="loading" id="questionLoading"><div class="spinner"></div><div>문제 불러오는 중...</div></div>
+    <div id="questionContent" style="display:none;">
+      <div class="question-card">
+        <div class="question-meta">
+          <span class="tag tag-concept" id="qConcept">개념</span>
+          <span class="tag tag-diff d1" id="qDiff">초급</span>
+          <span class="tag tag-code" id="qTypeTag" style="display:none;">📝 빈칸 채우기</span>
+        </div>
+        <div id="qText" class="question-text"></div>
+      </div>
+
+      <!-- 객관식 -->
+      <div id="multipleChoiceArea" class="answer-grid"></div>
+
+      <!-- 코드 입력 -->
+      <div id="codeInputSection" class="code-input-section" style="display:none;">
+        <div class="code-input-label">💻 빈칸에 들어갈 코드를 입력하세요 (Enter로 제출)</div>
+        <textarea class="code-input-area" id="codeInputTextarea" rows="2" placeholder="여기에 입력..."></textarea>
+        <div class="code-input-actions">
+          <button class="code-submit-btn" id="codeSubmitBtn" onclick="submitCodeAnswer()">✅ 제출</button>
+          <button class="hint-btn" id="hintBtn" onclick="toggleHint()" style="display:none;">💡 힌트</button>
+          <span class="enter-hint">Enter 키로 빠르게 제출</span>
+        </div>
+        <div class="hint-box" id="hintBox"></div>
+      </div>
+
+
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- 랭킹 -->
+<div id="screen-ranking" class="screen">
+<div class="game-container">
+  <div class="nav-bar">
+    <div class="nav-logo">⚔️ Java RPG</div>
+    <button class="btn-secondary" onclick="goBackFromRanking()">← 뒤로</button>
+  </div>
+  <div class="ranking-title">🏆 명예의 전당</div>
+  <div id="rankingContent"><div class="loading"><div class="spinner"></div><div>불러오는 중...</div></div></div>
+  <div style="text-align:center;margin-top:16px;">
+    <button class="btn-primary" style="max-width:260px;" onclick="showScreen('title')">🏠 홈으로</button>
+  </div>
+</div>
+</div>
+
+<!-- 종료 -->
+<div id="screen-end" class="screen">
+<div class="game-container" style="width:100%;">
+  <div class="end-icon" id="endIcon"></div>
+  <div class="end-title" id="endTitle"></div>
+  <div class="end-sub" id="endSub"></div>
+  <div class="end-stats">
+    <div class="end-stat"><span class="end-stat-val" id="endScore">0</span><div class="end-stat-label">최종 점수</div></div>
+    <div class="end-stat"><span class="end-stat-val" id="endStage">1</span><div class="end-stat-label">스테이지</div></div>
+    <div class="end-stat"><span class="end-stat-val" id="endHp">0</span><div class="end-stat-label">남은 HP</div></div>
+  </div>
+  <div class="end-buttons">
+    <button class="btn-primary" onclick="restartGame()">🔄 다시 하기</button>
+    <button class="btn-secondary" onclick="showRanking()">🏆 랭킹 보기</button>
+  </div>
+</div>
+</div>
+<!-- 피드백 모달 -->
+<div class="feedback-modal-overlay" id="feedbackModalOverlay">
+  <div class="feedback-modal" id="feedbackModal">
+    <div class="feedback-modal-header" id="feedbackModalHeader"></div>
+    <div class="feedback-modal-text" id="feedbackModalText"></div>
+    <div class="feedback-modal-code" id="feedbackModalCode" style="display:none;"></div>
+    <button class="feedback-modal-btn" id="feedbackModalBtn">다음 문제 →</button>
+  </div>
+</div>
+<!-- 콤보 토스트 -->
+<div class="combo-toast" id="comboToast">
+  <span style="font-size:2rem;display:block;margin-bottom:6px;" id="comboToastIcon"></span>
+  <div style="font-size:1rem;font-weight:700;color:var(--gold);" id="comboToastText"></div>
+</div>
+
+<script>
+  const API = 'https://everyday-fernlike-straggler.ngrok-free.dev/api/game';
+
+let G = {
+  playerId:null, nickname:'', playerHp:100, bossHp:0, bossMaxHp:0,
+  stage:1, score:0, combo:0, questionNumber:0, totalQuestions:4,
+  currentQuestion:null, bossEmoji:'🗿',
+  timerInterval:null, timerSeconds:30, timerMax:30,
+  hpDrainInterval:null,
+  gameOver:false,
+  pendingStageClear:null  // 마지막 문제 후 스테이지 클리어 대기
+};
+
+// =============================================
+// HP 자동 감소 (느리게: 4초마다 1씩)
+// =============================================
+function startHpDrain() {
+  stopHpDrain();
+  G.hpDrainInterval = setInterval(() => {
+    if (G.gameOver) return;
+    G.playerHp = Math.max(0, G.playerHp - 1);
+    updatePlayerHpDisplay();
+    if (G.playerHp <= 0) {
+      stopHpDrain(); stopTimer();
+      showEndScreen(false);
+    }
+  }, 4000); // 4초마다 1 감소
+}
+
+function stopHpDrain() {
+  if (G.hpDrainInterval) { clearInterval(G.hpDrainInterval); G.hpDrainInterval = null; }
+}
+
+// =============================================
+// 타이머 (객관식 30초, 코드입력 60초)
+// =============================================
+function startTimer(isCode) {
+  stopTimer();
+  G.timerMax = isCode ? 60 : 30;
+  G.timerSeconds = G.timerMax;
+  updateTimerDisplay();
+  G.timerInterval = setInterval(() => {
+    G.timerSeconds--;
+    updateTimerDisplay();
+    if (G.timerSeconds <= 0) { stopTimer(); onTimerExpired(); }
+  }, 1000);
+}
+
+function stopTimer() {
+  if (G.timerInterval) { clearInterval(G.timerInterval); G.timerInterval = null; }
+}
+
+function updateTimerDisplay() {
+  const pct = (G.timerSeconds / G.timerMax) * 100;
+  const bar = document.getElementById('timerBar');
+  bar.style.width = pct + '%';
+  bar.className = 'timer-bar-fill ' + (pct > 60 ? 'time-ok' : pct > 30 ? 'time-warn' : 'time-danger');
+  document.getElementById('timerText').textContent = G.timerSeconds + '초';
+}
+
+function onTimerExpired() {
+  disableAllInputs();
+  G.playerHp = Math.max(0, G.playerHp - 15);
+  updatePlayerHpDisplay();
+  shakePlayer();
+  showFeedback(false, '⏰ 시간 초과! -15 HP', '시간 안에 답하지 못했습니다.', null, '다음 문제 →', loadNextQuestion);
+}
+
+// =============================================
+// HP 표시
+// =============================================
+function updatePlayerHpDisplay() {
+  const pct = Math.max(0, G.playerHp);
+  const bar = document.getElementById('playerHpBar');
+  bar.style.width = pct + '%';
+  bar.className = 'player-hp-bar-fill ' + (pct > 60 ? 'hp-high' : pct > 30 ? 'hp-mid' : 'hp-low');
+  document.getElementById('playerHpText').textContent = G.playerHp;
+  const avatar = document.getElementById('playerAvatar');
+  if (pct > 75) avatar.textContent = '🧙';
+  else if (pct > 50) avatar.textContent = '😰';
+  else if (pct > 25) avatar.textContent = '🤕';
+  else if (pct > 0) avatar.textContent = '😵';
+  else avatar.textContent = '💀';
+}
+
+function updateBossHpDisplay() {
+  const pct = Math.max(0, (G.bossHp / G.bossMaxHp) * 100);
+  document.getElementById('bossHpBar').style.width = pct + '%';
+  document.getElementById('bossHpText').textContent = G.bossHp;
+  const avatar = document.getElementById('bossAvatar');
+  avatar.className = 'boss-avatar ';
+  if (pct > 75) { avatar.className += 'boss-hp-100'; avatar.textContent = G.bossEmoji; }
+  else if (pct > 50) { avatar.className += 'boss-hp-75'; avatar.textContent = G.bossEmoji; }
+  else if (pct > 25) { avatar.className += 'boss-hp-50'; avatar.textContent = '😤'; }
+  else if (pct > 0) { avatar.className += 'boss-hp-25'; avatar.textContent = '😩'; }
+  else { avatar.className += 'boss-hp-dead'; avatar.textContent = '💀'; }
+}
+
+// =============================================
+// 화면 전환
+// =============================================
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+// =============================================
+// 게임 시작
+// =============================================
+async function startGame() {
+  const nickname = document.getElementById('nicknameInput').value.trim();
+  const errEl = document.getElementById('startError');
+  errEl.style.display = 'none';
+  if (!nickname) { errEl.textContent = '닉네임을 입력해주세요!'; errEl.style.display = 'block'; return; }
+  try {
+    const res = await fetch(`${API}/start`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({nickname})});
+    if (!res.ok) throw new Error();
+    const d = await res.json();
+    G.playerId = d.playerId; G.nickname = d.nickname; G.playerHp = d.playerHp;
+    G.bossHp = d.boss.currentHp; G.bossMaxHp = d.boss.maxHp;
+    G.stage = 1; G.score = 0; G.combo = 0;
+    G.totalQuestions = d.questionsPerStage;
+    G.bossEmoji = d.boss.emoji;
+    G.gameOver = false; G.pendingStageClear = null;
+    document.getElementById('playerNameDisplay').textContent = nickname;
+    document.getElementById('bossNameDisplay').textContent = d.boss.name;
+    document.getElementById('bossMaxHpText').textContent = d.boss.maxHp;
+    updateBossHpDisplay(); updatePlayerHpDisplay();
+    showScreen('game');
+    startHpDrain();
+    loadNextQuestion();
+  } catch(e) {
+    errEl.textContent = '서버에 연결할 수 없습니다. 백엔드(8080) 실행을 확인해주세요.';
+    errEl.style.display = 'block';
+  }
+}
+
+// =============================================
+// 문제 로드
+// =============================================
+async function loadNextQuestion() {
+  stopTimer();
+  G.pendingStageClear = null;
+  document.getElementById('questionLoading').style.display = 'block';
+  document.getElementById('questionContent').style.display = 'none';
+  document.getElementById('feedbackModalOverlay').classList.remove('show');
+  document.getElementById('hintBox').className = 'hint-box';
+
+  try {
+    const res = await fetch(`${API}/question?playerId=${G.playerId}`);
+    if (!res.ok) throw new Error();
+    const q = await res.json();
+    G.currentQuestion = q;
+    renderQuestion(q);
+    startTimer(q.questionType === 'CODE_INPUT');
+  } catch(e) {
+    document.getElementById('questionLoading').innerHTML = '<div class="error-msg">문제를 불러오지 못했습니다.</div>';
+  }
+}
+
+// =============================================
+// 문제 렌더링
+// =============================================
+function renderQuestion(q) {
+  document.getElementById('questionLoading').style.display = 'none';
+  document.getElementById('questionContent').style.display = 'block';
+
+  document.getElementById('stageBadge').textContent = 'STAGE ' + G.stage;
+  document.getElementById('questionProgress').textContent = `문제 ${q.questionNumber} / ${q.totalQuestions}`;
+  document.getElementById('scoreText').textContent = G.score.toLocaleString();
+
+  document.getElementById('qConcept').textContent = q.concept;
+  const diffEl = document.getElementById('qDiff');
+  diffEl.className = 'tag tag-diff d' + q.difficulty;
+  diffEl.textContent = ['','초급','중급','고급'][q.difficulty];
+
+  const isCode = q.questionType === 'CODE_INPUT';
+  document.getElementById('qTypeTag').style.display = isCode ? 'inline-block' : 'none';
+
+  // 문제 텍스트 렌더링 (\n 개행 처리)
+  renderQuestionText(q.questionText);
+
+  const mcArea = document.getElementById('multipleChoiceArea');
+  const ciSection = document.getElementById('codeInputSection');
+
+  if (isCode) {
+    // 코드 입력 모드
+    mcArea.style.display = 'none';
+    ciSection.style.display = 'block';
+    const ta = document.getElementById('codeInputTextarea');
+    ta.value = '';
+    ta.disabled = false;
+    document.getElementById('codeSubmitBtn').disabled = false;
+
+    // 힌트 설정
+    const hintBtn = document.getElementById('hintBtn');
+    if (q.hint) {
+      hintBtn.style.display = 'inline-block';
+      document.getElementById('hintBox').textContent = q.hint;
+    } else {
+      hintBtn.style.display = 'none';
+    }
+
+    // 포커스
+    setTimeout(() => ta.focus(), 100);
+  } else {
+    // 객관식 모드
+    mcArea.style.display = 'grid';
+    ciSection.style.display = 'none';
+    mcArea.innerHTML = '';
+    [['A',q.optionA],['B',q.optionB],['C',q.optionC],['D',q.optionD]].forEach(([label,text]) => {
+      const btn = document.createElement('button');
+      btn.className = 'answer-btn';
+      btn.innerHTML = `<span class="answer-label">${label}</span><span>${escHtml(text)}</span>`;
+      btn.onclick = () => submitAnswer(label, btn);
+      mcArea.appendChild(btn);
+    });
+  }
+}
+
+// 문제 텍스트 렌더링 (코드블록 구분)
+function renderQuestionText(text) {
+  const el = document.getElementById('qText');
+  el.innerHTML = '';
+
+  const parts = text.split(/\n\n+/);
+  parts.forEach(part => {
+    const trimmed = part.trim();
+    if (!trimmed) return;
+    if (trimmed.includes('\n') && (
+            trimmed.includes('{') || trimmed.includes('(') ||
+            trimmed.includes('class ') || trimmed.includes('public ') ||
+            trimmed.includes('___') || trimmed.includes('System.')
+    )) {
+      const block = document.createElement('div');
+      block.className = 'code-block';
+      block.innerHTML = escHtml(trimmed).replace(/___/g,
+              '<span style="display:inline-block;min-width:80px;height:22px;background:#1e3a5f;border:2px solid #6ee7f7;border-radius:4px;vertical-align:middle;margin:0 4px;"></span>'
+      );
+      el.appendChild(block);
+    } else {
+      const p = document.createElement('p');
+      p.style.marginBottom = '8px';
+      p.innerHTML = escHtml(trimmed).replace(/___/g,
+              '<span style="display:inline-block;min-width:80px;height:22px;background:#1e3a5f;border:2px solid #6ee7f7;border-radius:4px;vertical-align:middle;margin:0 4px;"></span>'
+      );
+      el.appendChild(p);
+    }
+  });
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toggleHint() {
+  const box = document.getElementById('hintBox');
+  box.classList.toggle('show');
+}
+
+// =============================================
+// Enter 키 자동 제출
+// =============================================
+document.addEventListener('DOMContentLoaded', () => {
+  const ta = document.getElementById('codeInputTextarea');
+  ta.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const btn = document.getElementById('codeSubmitBtn');
+      if (!btn.disabled) submitCodeAnswer();
+    }
+  });
+});
+
+// =============================================
+// 답변 제출
+// =============================================
+function disableAllInputs() {
+  document.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
+  const csb = document.getElementById('codeSubmitBtn');
+  if (csb) csb.disabled = true;
+  const ta = document.getElementById('codeInputTextarea');
+  if (ta) ta.disabled = true;
+}
+
+async function submitAnswer(answer, clickedBtn) {
+  stopTimer();
+  disableAllInputs();
+  await processAnswer(answer, 'MULTIPLE_CHOICE');
+}
+
+async function submitCodeAnswer() {
+  const ta = document.getElementById('codeInputTextarea');
+  const code = ta.value.trim();
+  if (!code) { ta.focus(); return; }
+  stopTimer();
+  disableAllInputs();
+  await processAnswer(code, 'CODE_INPUT');
+}
+
+async function processAnswer(answer, questionType) {
+  try {
+    const res = await fetch(`${API}/answer`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({playerId:G.playerId, questionId:G.currentQuestion.questionId, answer, questionType})
+    });
+    if (!res.ok) throw new Error();
+    const r = await res.json();
+
+    G.playerHp = r.playerHp; G.bossHp = r.bossHp; G.bossMaxHp = r.bossMaxHp;
+    G.score = r.totalScore; G.combo = r.comboCount;
+
+    updatePlayerHpDisplay();
+    updateBossHpDisplay();
+    document.getElementById('scoreText').textContent = G.score.toLocaleString();
+    document.getElementById('questionProgress').textContent = `문제 ${r.questionNumber} / ${r.totalQuestions}`;
+    updateComboDisplay(r.comboCount);
+
+    // 답안 강조 (객관식)
+    if (G.currentQuestion.questionType !== 'CODE_INPUT') {
+      highlightAnswers(answer, r.correctAnswer);
+    }
+
+    // 애니메이션
+    if (r.correct && r.damageDealt > 0) { showDamageFloat('-' + r.damageDealt, 'to-boss'); shakeBoss(); }
+    if (!r.correct) { shakePlayer(); showDamageFloat('-HP', 'to-player'); }
+
+    if (r.comboEffect) showComboToast(r.comboEffect);
+
+// 피드백 모달 표시
+    const fbCode = (G.currentQuestion.questionType === 'CODE_INPUT') ? r.correctAnswer : null;
+    const header = r.correct
+            ? '✅ 정답! +' + r.scoreGained + '점'
+            : '❌ 오답! 정답: ' + r.correctAnswer;
+
+    if (r.gameStatus === 'WIN') {
+      G.gameOver = true; stopHpDrain();
+      showFeedback(r.correct, header, r.explanation, fbCode, '🏆 게임 클리어!', () => showEndScreen(true));
+    } else if (r.gameStatus === 'LOSE') {
+      G.gameOver = true; stopHpDrain();
+      showFeedback(r.correct, header, r.explanation, fbCode, '💀 결과 보기', () => showEndScreen(false));
+    } else if (r.gameStatus === 'STAGE_CLEAR') {
+      showFeedback(r.correct, header, r.explanation, fbCode, '🎉 스테이지 클리어 확인 →', () => showStageClear(r));
+    } else {
+      showFeedback(r.correct, header, r.explanation, fbCode, '다음 문제 →', loadNextQuestion);
+    }
+
+  } catch(e) {
+    disableAllInputs();
+    alert('오류: ' + e.message);
+  }
+}
+
+// 다음 버튼 기본 핸들러 (동적으로 교체됨)
+function handleNextButton() { loadNextQuestion(); }
+
+function highlightAnswers(selected, correct) {
+  document.querySelectorAll('.answer-btn').forEach((btn, i) => {
+    const label = ['A','B','C','D'][i];
+    if (label === correct) btn.classList.add('correct');
+    else if (label === selected && selected !== correct) btn.classList.add('wrong');
+  });
+}
+
+function showFeedback(correct, header, text, code, btnText, btnAction) {
+  const overlay = document.getElementById('feedbackModalOverlay');
+  const modal = document.getElementById('feedbackModal');
+  modal.className = 'feedback-modal ' + (correct ? 'correct-fb' : 'wrong-fb');
+  document.getElementById('feedbackModalHeader').textContent = header;
+  document.getElementById('feedbackModalText').textContent = text || '';
+  const codeEl = document.getElementById('feedbackModalCode');
+  if (code) { codeEl.style.display = 'block'; codeEl.textContent = '정답: ' + code; }
+  else { codeEl.style.display = 'none'; }
+  const btn = document.getElementById('feedbackModalBtn');
+  btn.textContent = btnText || '다음 문제 →';
+  btn.onclick = () => { overlay.classList.remove('show'); btnAction(); };
+  overlay.classList.add('show');
+}
+
+function shakeBoss() {
+  const el = document.getElementById('bossAvatar');
+  el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
+}
+
+function shakePlayer() {
+  const el = document.getElementById('playerAvatar');
+  el.classList.remove('hurt'); void el.offsetWidth; el.classList.add('hurt');
+}
+
+function showDamageFloat(text, type) {
+  const wrap = document.querySelector('.battle-area');
+  const el = document.createElement('div');
+  el.className = 'damage-float ' + type;
+  el.textContent = text;
+  el.style.cssText = `left:${20+Math.random()*60}%;top:15%;`;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 1000);
+}
+
+function updateComboDisplay(combo) {
+  const el = document.getElementById('comboDisplay');
+  el.innerHTML = combo >= 2 ? `<div class="combo-badge">🔥 ${combo} COMBO!</div>` : '';
+}
+
+function showComboToast(effect) {
+  const toast = document.getElementById('comboToast');
+  document.getElementById('comboToastIcon').textContent = effect.type === 'HEAL' ? '💚' : '🔥';
+  document.getElementById('comboToastText').textContent = effect.message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1800);
+}
+
+// 스테이지 클리어 오버레이 (피드백 확인 후 표시)
+function showStageClear(result) {
+  stopHpDrain();
+  const boss = result.nextBoss;
+  if (!boss) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'stageClearOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;text-align:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="font-size:3.5rem;margin-bottom:14px">🎉</div>
+    <div style="font-family:Cinzel,serif;font-size:2rem;color:#fbbf24;font-weight:700;margin-bottom:6px">STAGE CLEAR!</div>
+    <div style="color:#94a3b8;margin-bottom:24px">다음 보스: ${boss.emoji} ${boss.name}</div>
+    <div style="background:#161e30;border:1px solid #2a3548;border-radius:12px;padding:20px 28px;margin-bottom:24px;max-width:360px;">
+      <div style="font-size:3rem;margin-bottom:6px">${boss.emoji}</div>
+      <div style="font-size:1.1rem;font-weight:700;color:#f87171">${boss.name}</div>
+      <div style="font-size:.82rem;color:#64748b;margin-top:6px">${boss.description}</div>
+      <div style="font-size:.8rem;color:#94a3b8;margin-top:8px">HP: ${boss.maxHp} / 공격력: ${boss.attackPower}</div>
+    </div>
+    <button onclick="startNextStage(${JSON.stringify(boss).replace(/"/g,'&quot;')})" style="background:linear-gradient(135deg,#0ea5e9,#a78bfa);border:none;border-radius:10px;padding:12px 36px;color:white;font-size:.95rem;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;">
+      스테이지 ${boss.stage} 시작 →
+    </button>`;
+  document.body.appendChild(overlay);
+}
+
+function startNextStage(boss) {
+  const overlay = document.getElementById('stageClearOverlay');
+  if (overlay) overlay.remove();
+  G.stage = boss.stage;
+  G.bossHp = boss.maxHp;
+  G.bossMaxHp = boss.maxHp;
+  G.bossEmoji = boss.emoji;
+  document.getElementById('bossNameDisplay').textContent = boss.name;
+  document.getElementById('bossMaxHpText').textContent = boss.maxHp;
+  updateBossHpDisplay();
+  startHpDrain();
+  loadNextQuestion();
+}
+
+function showEndScreen(isWin) {
+  G.gameOver = true; stopHpDrain(); stopTimer();
+  document.getElementById('endIcon').textContent = isWin ? '🏆' : '💀';
+  const titleEl = document.getElementById('endTitle');
+  titleEl.textContent = isWin ? 'VICTORY!' : 'GAME OVER';
+  titleEl.className = 'end-title ' + (isWin ? 'win' : 'lose');
+  document.getElementById('endSub').textContent = isWin ? '모든 보스를 물리쳤습니다! Java 마스터!' : '쓰러졌습니다. 다시 도전해보세요!';
+  document.getElementById('endScore').textContent = G.score.toLocaleString();
+  document.getElementById('endStage').textContent = G.stage;
+  document.getElementById('endHp').textContent = Math.max(0, G.playerHp);
+  showScreen('end');
+}
+
+async function showRanking() {
+  showScreen('ranking');
+  const content = document.getElementById('rankingContent');
+  content.innerHTML = '<div class="loading"><div class="spinner"></div><div>불러오는 중...</div></div>';
+  try {
+    const res = await fetch(`${API}/ranking`);
+    const data = await res.json();
+    if (!data.length) { content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">아직 기록이 없습니다!</div>'; return; }
+    let html = `<div class="ranking-table"><div class="ranking-row header"><div>순위</div><div>닉네임</div><div>점수</div><div>스테이지</div><div>결과</div></div>`;
+    data.forEach(r => {
+      html += `<div class="ranking-row ${r.rank<=3?'rank-'+r.rank:''}">
+        <div class="rank-num">${r.rank<=3?['🥇','🥈','🥉'][r.rank-1]:r.rank}</div>
+        <div class="rank-nickname">${escHtml(r.nickname)}</div>
+        <div class="rank-score">${r.score.toLocaleString()}</div>
+        <div style="color:var(--text2);font-size:.82rem">${r.maxStage}스테이지</div>
+        <div><span class="rank-result ${r.result}">${r.result==='WIN'?'승리':'패배'}</span></div>
+      </div>`;
+    });
+    content.innerHTML = html + '</div>';
+  } catch(e) {
+    content.innerHTML = '<div class="error-msg">랭킹을 불러오지 못했습니다.</div>';
+  }
+}
+
+function goBackFromRanking() {
+  if (G.playerId && G.playerHp > 0 && !G.gameOver) showScreen('game');
+  else showScreen('title');
+}
+
+function confirmQuit() {
+  if (confirm('게임을 나가면 진행 상황이 사라집니다. 나가시겠습니까?')) {
+    stopHpDrain(); stopTimer(); G.gameOver = true;
+    showScreen('title');
+  }
+}
+
+function restartGame() {
+  stopHpDrain(); stopTimer();
+  G = {playerId:null,nickname:'',playerHp:100,bossHp:0,bossMaxHp:0,stage:1,score:0,combo:0,questionNumber:0,totalQuestions:4,currentQuestion:null,bossEmoji:'🗿',timerInterval:null,timerSeconds:30,timerMax:30,hpDrainInterval:null,gameOver:false,pendingStageClear:null};
+  showScreen('title');
+}
+
+document.getElementById('nicknameInput').addEventListener('keydown', e => { if(e.key==='Enter') startGame(); });
+</script>
+</body>
+</html>
