@@ -198,6 +198,8 @@ public class GameService {
         }
 
         if (session.getQuestionCount() >= QUESTIONS_PER_STAGE) {
+            // 마지막 문제 클리어 시 빌런 HP 강제 0
+            session.setBossCurrentHp(0);
             if (player.getCurrentStage() >= 3) {
                 player.setStatus(Player.GameStatus.WIN);
                 saveOrUpdateRanking(player);

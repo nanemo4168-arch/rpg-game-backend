@@ -486,3 +486,227 @@ NULL, NULL, NULL, NULL,
 '<T>',
 '제네릭 클래스는 클래스명 뒤에 <T>와 같이 타입 매개변수를 선언합니다.',
 '제네릭 타입 선언은 꺾쇠 괄호 안에 타입 매개변수를 씁니다.', false);
+-- 교안 추가 문제 (변수/타입, 연산자, 조건문/반복문)
+-- =============================================
+
+-- STAGE 1 추가 객관식
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('변수와 타입', 1, 1,
+     '자바에서 변수를 초기화하지 않고 읽으면 어떻게 되나요?',
+     'MULTIPLE_CHOICE',
+     '0이 출력된다', '컴파일 에러가 발생한다', '런타임 에러가 발생한다', 'null이 출력된다',
+     'B',
+     '초기화되지 않은 변수를 읽으면 컴파일 에러가 발생합니다. 변수는 반드시 초기화 후 사용해야 합니다.',
+     NULL, false);
+
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('변수와 타입', 2, 1,
+     '다음 코드에서 에러가 발생하는 이유는?
+
+     long var = 1000000000000;',
+     'MULTIPLE_CHOICE',
+     'long 타입은 사용 불가', '컴파일러가 기본적으로 int로 간주해서', 'long은 음수만 저장 가능', '세미콜론이 없어서',
+     'B',
+     '정수 리터럴은 기본적으로 int로 간주됩니다. long 타입에 큰 수를 저장하려면 숫자 뒤에 L을 붙여야 합니다 (예: 1000000000000L).',
+     NULL, true);
+
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('변수와 타입', 2, 1,
+     '정수 연산 1 / 2 의 결과는?',
+     'MULTIPLE_CHOICE',
+     '0.5', '1', '0', '0.0',
+     'C',
+     '정수끼리의 나눗셈은 정수 결과를 반환합니다. 1/2는 0.5가 아닌 0입니다. 실수 결과를 원하면 (double)1/2처럼 캐스팅해야 합니다.',
+     NULL, false);
+
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('연산자', 2, 1,
+     '다음 코드의 출력 결과는?
+
+     int z;
+     int x = 10;
+     z = x++;
+     System.out.println(z);',
+     'MULTIPLE_CHOICE',
+     '11', '10', '9', '오류 발생',
+     'B',
+     '후위 증감(x++)은 현재 값을 먼저 대입한 후 증가합니다. z에 10이 대입된 후 x가 11이 됩니다.',
+     NULL, true);
+
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('연산자', 2, 1,
+     '삼항 연산자로 85점을 등급으로 변환하는 코드의 결과는?
+
+     int score = 85;
+     char grade = (score > 90) ? ''A'' : ((score > 80) ? ''B'' : ''C'');',
+     'MULTIPLE_CHOICE',
+     'A', 'B', 'C', '오류 발생',
+     'B',
+     'score가 85이므로 첫 번째 조건(>90)은 false, 두 번째 조건(>80)은 true이므로 B가 됩니다.',
+     NULL, true);
+
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('조건문', 1, 1,
+     'do-while문에 대한 설명으로 올바른 것은?',
+     'MULTIPLE_CHOICE',
+     '조건이 false면 한 번도 실행 안 된다',
+     '블록을 최소 1회 실행 후 조건을 평가한다',
+     'while문과 완전히 동일하다',
+     '조건식이 필요 없다',
+     'B',
+     'do-while문은 블록을 먼저 실행한 후 조건을 평가합니다. 조건이 처음부터 false여도 최소 1번은 실행됩니다.',
+     NULL, false);
+
+-- STAGE 1 추가 빈칸 채우기
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('변수와 타입', 2, 1,
+     '실수를 정수로 강제 변환(캐스팅)하는 빈칸을 채우세요.
+
+     double var7 = 3.14;
+     int var8 = ___ var7;',
+     'CODE_INPUT',
+     NULL, NULL, NULL, NULL,
+     '(int)',
+     '강제 타입 변환(캐스팅)은 (타입) 형식으로 사용합니다. 소수점은 잘립니다.',
+     '캐스팅 연산자는 (변환할타입) 형식입니다.', false);
+
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('연산자', 1, 1,
+     '1~45 사이의 랜덤 정수를 구하는 빈칸을 채우세요.
+
+     int num = (int)(Math.random() * 45) + ___;',
+     'CODE_INPUT',
+     NULL, NULL, NULL, NULL,
+     '1',
+     'Math.random()은 0.0~1.0 미만의 값을 반환합니다. *45를 하면 0~44, +1을 하면 1~45가 됩니다.',
+     '시작값을 더해야 1부터 시작합니다.', false);
+
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('조건문', 2, 1,
+     'switch 표현식에서 값을 반환하는 키워드를 채우세요.
+
+     int score = switch(grade) {
+         case "A" -> 100;
+         case "B" -> {
+             int result = 80;
+             ___ result;
+         }
+         default -> 60;
+     };',
+     'CODE_INPUT',
+     NULL, NULL, NULL, NULL,
+     'yield',
+     'Java 13부터 switch 블록 안에서 값을 반환할 때 yield 키워드를 사용합니다.',
+     'Java 13+에서 switch 블록 내 값 반환 키워드입니다.', false);
+
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('반복문', 1, 1,
+     '홀수를 건너뛰고 짝수만 출력하는 빈칸을 채우세요.
+
+     for(int i=1; i<=10; i++) {
+         if(i % 2 != 0) {
+             ___;
+         }
+         System.out.print(i + " ");
+     }',
+     'CODE_INPUT',
+     NULL, NULL, NULL, NULL,
+     'continue',
+     'continue는 현재 반복을 건너뛰고 다음 반복으로 이동합니다. 홀수일 때 continue하면 짝수만 출력됩니다.',
+     '현재 반복을 건너뛰는 키워드입니다.', false);
+
+-- STAGE 2 추가 객관식
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('클래스', 2, 2,
+     '자바에서 main() 메소드의 역할은?',
+     'MULTIPLE_CHOICE',
+     '클래스를 정의한다', '프로그램 실행의 진입점이다', '변수를 초기화한다', '객체를 생성한다',
+     'B',
+     'main() 메소드는 프로그램 실행의 진입점(Entry Point)입니다. JVM은 프로그램 실행 시 가장 먼저 main()을 호출합니다.',
+     NULL, false);
+
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('클래스', 2, 2,
+     '자바 소스 파일(.java)을 컴파일하면 생성되는 파일 확장자는?',
+     'MULTIPLE_CHOICE',
+     '.exe', '.jar', '.class', '.obj',
+     'C',
+     'javac 컴파일러로 .java 파일을 컴파일하면 JVM이 실행할 수 있는 바이트코드 파일(.class)이 생성됩니다.',
+     NULL, false);
+
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('클래스', 2, 2,
+     '자바의 자동 메모리 관리 기능을 담당하는 것은?',
+     'MULTIPLE_CHOICE',
+     'JDK', 'JRE', 'Garbage Collector', 'Compiler',
+     'C',
+     '자바의 Garbage Collector(가비지 컬렉터)가 사용되지 않는 객체를 자동으로 메모리에서 제거합니다.',
+     NULL, false);
+
+-- STAGE 2 추가 빈칸 채우기
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('클래스', 1, 2,
+     '키보드 입력을 받기 위해 사용하는 클래스의 빈칸을 채우세요.
+
+     ___ scanner = new Scanner(System.in);
+     String input = scanner.nextLine();',
+     'CODE_INPUT',
+     NULL, NULL, NULL, NULL,
+     'Scanner',
+     'Scanner 클래스는 java.util 패키지에 있으며 키보드 입력을 받을 때 사용합니다.',
+     '키보드 입력을 처리하는 java.util 패키지의 클래스입니다.', false);
+
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('클래스', 2, 2,
+     '클래스명은 소스 파일명과 동일해야 합니다. 빈칸을 채우세요.
+
+     public ___ HelloWorld {
+         public static void main(String[] args) {
+         }
+     }',
+     'CODE_INPUT',
+     NULL, NULL, NULL, NULL,
+     'class',
+     '자바에서 클래스는 class 키워드로 선언합니다. 파일명이 HelloWorld.java이면 클래스명도 HelloWorld여야 합니다.',
+     '클래스를 선언하는 키워드입니다.', false);
+
+-- STAGE 3 추가 객관식
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('스트림', 3, 3,
+     '자바에서 &&(AND) 연산자의 결과로 true가 나오려면?',
+     'MULTIPLE_CHOICE',
+     '피연산자 중 하나만 true이면 된다',
+     '피연산자 모두가 true여야 한다',
+     '피연산자 모두가 false여야 한다',
+     '피연산자 중 하나만 false이면 된다',
+     'B',
+     '&&(논리곱)은 피연산자 모두 true일 때만 true입니다. 하나라도 false면 결과는 false입니다.',
+     NULL, false);
+
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('제네릭', 3, 3,
+     'JVM(Java Virtual Machine)에 대한 설명으로 올바른 것은?',
+     'MULTIPLE_CHOICE',
+     '자바 소스를 컴파일하는 도구',
+     '운영체제에 독립적으로 바이트코드를 실행하는 가상 환경',
+     '자바 개발 도구 모음',
+     '데이터베이스 연결 도구',
+     'B',
+     'JVM은 바이트코드(.class)를 실행하는 가상 머신으로, 운영체제와 무관하게 동일한 코드를 실행할 수 있게 해줍니다.',
+     NULL, false);
+
+-- STAGE 3 추가 빈칸 채우기
+INSERT INTO questions (concept, difficulty, stage, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation, hint, has_code) VALUES
+    ('예외처리', 2, 3,
+     '중첩 반복문에서 바깥쪽 루프까지 종료하는 빈칸을 채우세요.
+
+     ___: for(int i=0; i<3; i++) {
+         for(int j=0; j<3; j++) {
+             if(j == 1) break Outter;
+         }
+     }',
+     'CODE_INPUT',
+     NULL, NULL, NULL, NULL,
+     'Outter',
+     '라벨(Label)을 사용하면 중첩 반복문에서 특정 반복문을 종료할 수 있습니다. break 라벨명; 형식으로 사용합니다.',
+     '중첩 반복문 탈출 시 사용하는 라벨 이름입니다.', false);
